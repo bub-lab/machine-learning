@@ -66,6 +66,36 @@ def cnn_model_fn(features, labels, mode):
   return tf.estimator.EstimatorSpec(
       mode=mode, loss=loss, eval_metric_ops=eval_metric_ops)
 
+((train_data, train_labels),(eval_data, eval_labels)) = tf.keras.datasets.mnist.load_data()
+train_data = train_data/np.float32(255)
+train_labels = train_labels.astype(np.int32)  # not required
+
+eval_data = eval_data/np.float32(255)
+eval_labels = eval_labels.astype(np.int32)  # not required 
+
+# Set up logging for predictions
+# Log the values in the "Softmax" tensor with label "probabilities"
+tensors_to_log = {"probabilities": "softmax_tensor"}
+logging_hook = tf.train.LoggingTensorHook(
+    tensors=tensors_to_log, every_n_iter=100)
+
+
+  # Create the Estimator
+mnist_classifier = tf.estimator.Estimator(
+    model_fn=cnn_model_fn, model_dir=LOG_DIR)
+
+# Train the model
+train_input_fn = tf.compat.v1.estimator.inputs.numpy_input_fn(
+    x={"x": train_data},
+    y=train_labels,
+    batch_size=200,
+    num_epochs=None,
+    shuffle=True)
+
+mnist_classifier.train(
+    input_fn=train_input_fn,
+    steps=2000,
+    hooks=[logging_hook])
 
 
 
